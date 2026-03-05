@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NyayaAI — AI-Powered Legal Case Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a0f1e;
+  --navy2: #0f1729;
+  --navy3: #151f3a;
+  --gold: #c9a84c;
+  --gold2: #e8c96a;
+  --gold3: #f5e0a0;
+  --white: #f5f0e8;
+  --white2: #ede8df;
+  --red: #c0392b;
+  --green: #27ae60;
+  --blue: #2980b9;
+  --accent: #1abc9c;
+  --glass: rgba(255,255,255,0.04);
+  --glass2: rgba(201,168,76,0.08);
+  --shadow: 0 8px 48px rgba(0,0,0,0.6);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--navy);
+  color:var(--white);
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* ── Custom Cursor ── */
+#cursor{position:fixed;width:12px;height:12px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:transform 0.1s,width 0.2s,height 0.2s;mix-blend-mode:difference;}
+#cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid var(--gold);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:all 0.15s ease;}
+body:hover #cursor{opacity:1;}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--navy);}
+::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px;}
+
+/* ── Noise overlay ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9990;opacity:0.35;
+}
+
+/* ── Loader ── */
+#loader{
+  position:fixed;inset:0;background:var(--navy);z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  transition:opacity 0.8s ease;
+}
+#loader .logo-text{font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;color:var(--gold);letter-spacing:2px;}
+#loader .sub{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--gold3);opacity:0.7;letter-spacing:4px;}
+.loader-bar{width:240px;height:2px;background:rgba(201,168,76,0.2);border-radius:2px;overflow:hidden;}
+.loader-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));width:0%;animation:loadfill 2s ease forwards;}
+@keyframes loadfill{to{width:100%;}}
+.loader-dots{display:flex;gap:8px;}
+.loader-dots span{width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:0.3;animation:dotpulse 1.2s ease infinite;}
+.loader-dots span:nth-child(2){animation-delay:0.2s;}
+.loader-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes dotpulse{0%,100%{opacity:0.3;transform:scale(1);}50%{opacity:1;transform:scale(1.3);}}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  padding:20px 60px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(180deg,rgba(10,15,30,0.98) 0%,transparent 100%);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(201,168,76,0.1);
+  transition:all 0.3s;
+}
+nav.scrolled{background:rgba(10,15,30,0.98);border-bottom-color:rgba(201,168,76,0.2);}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:var(--gold);letter-spacing:1px;text-decoration:none;}
+.nav-logo span{color:var(--white);font-weight:400;}
+.nav-links{display:flex;gap:36px;align-items:center;}
+.nav-links a{color:var(--white2);text-decoration:none;font-size:0.88rem;font-weight:500;letter-spacing:0.5px;transition:color 0.2s;position:relative;}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--gold);transition:width 0.3s;}
+.nav-links a:hover{color:var(--gold);}
+.nav-links a:hover::after{width:100%;}
+.nav-cta{background:var(--gold);color:var(--navy);padding:10px 24px;border-radius:4px;font-weight:600;font-size:0.85rem;letter-spacing:0.5px;transition:all 0.2s;text-decoration:none;}
+.nav-cta:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,0.3);}
+
+/* ── HERO ── */
+#hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:120px 60px 80px;
+  position:relative;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(201,168,76,0.06) 0%,transparent 70%),
+             radial-gradient(ellipse 40% 40% at 80% 80%,rgba(26,188,156,0.04) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 80% at 10% 20%,rgba(41,128,185,0.04) 0%,transparent 60%);
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(201,168,76,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.04) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 70%);
+}
+.hero-content{position:relative;z-index:2;text-align:center;max-width:900px;}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--glass2);border:1px solid rgba(201,168,76,0.2);
+  padding:8px 20px;border-radius:40px;margin-bottom:32px;
+  font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:2px;color:var(--gold);
+  animation:fadeUp 0.8s ease both;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.8rem,7vw,5.5rem);
+  font-weight:900;line-height:1.05;
+  margin-bottom:28px;
+  animation:fadeUp 0.8s 0.2s ease both;
+}
+h1 .gold{color:var(--gold);}
+h1 .line2{display:block;font-size:0.65em;font-weight:400;color:var(--white2);margin-top:8px;}
+.hero-desc{
+  font-size:1.1rem;color:rgba(245,240,232,0.7);line-height:1.8;
+  max-width:640px;margin:0 auto 48px;
+  animation:fadeUp 0.8s 0.4s ease both;
+}
+.hero-buttons{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.8s 0.6s ease both;}
+.btn-primary{
+  background:var(--gold);color:var(--navy);
+  padding:14px 36px;border-radius:4px;font-weight:700;font-size:0.95rem;
+  text-decoration:none;transition:all 0.2s;border:none;cursor:pointer;
+  letter-spacing:0.5px;
+}
+.btn-primary:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(201,168,76,0.35);}
+.btn-secondary{
+  background:transparent;color:var(--white);
+  padding:14px 36px;border-radius:4px;font-weight:500;font-size:0.95rem;
+  text-decoration:none;transition:all 0.2s;border:1px solid rgba(255,255,255,0.2);cursor:pointer;
+}
+.btn-secondary:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px);}
+.hero-stats{
+  display:flex;gap:48px;justify-content:center;margin-top:80px;
+  padding-top:48px;border-top:1px solid rgba(201,168,76,0.1);
+  animation:fadeUp 0.8s 0.8s ease both;
+  flex-wrap:wrap;
+}
+.stat{text-align:center;}
+.stat-num{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:900;color:var(--gold);display:block;}
+.stat-label{font-size:0.8rem;color:rgba(245,240,232,0.5);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── Floating Ashoka Wheel ── */
+.ashoka-bg{
+  position:absolute;right:-100px;top:50%;transform:translateY(-50%);
+  width:500px;height:500px;opacity:0.04;
+  animation:rotateSlow 60s linear infinite;
+}
+@keyframes rotateSlow{to{transform:translateY(-50%) rotate(360deg);}}
+
+/* ── SECTIONS ── */
+section{padding:100px 60px;}
+.section-label{
+  font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+  letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;
+}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:900;line-height:1.1;margin-bottom:20px;}
+.section-desc{color:rgba(245,240,232,0.6);font-size:1rem;line-height:1.8;max-width:560px;}
+
+/* ── CRISIS SECTION ── */
+#crisis{background:var(--navy2);position:relative;overflow:hidden;}
+.crisis-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.crisis-visual{position:relative;}
+.crisis-counter{
+  background:var(--navy3);border:1px solid rgba(201,168,76,0.2);
+  border-radius:12px;padding:40px;text-align:center;
+  box-shadow:0 0 80px rgba(192,57,43,0.1);
+}
+.counter-num{font-family:'Playfair Display',serif;font-size:4rem;font-weight:900;color:#e74c3c;line-height:1;}
+.counter-label{color:rgba(245,240,232,0.6);font-size:0.85rem;margin-top:8px;letter-spacing:1px;}
+.crisis-bars{margin-top:24px;display:flex;flex-direction:column;gap:12px;}
+.crisis-bar-item{display:flex;align-items:center;gap:12px;font-size:0.82rem;}
+.crisis-bar-item span:first-child{width:120px;color:var(--white2);text-align:right;}
+.bar-track{flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),#e74c3c);transition:width 1.5s ease;}
+.crisis-bar-item span:last-child{width:50px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.75rem;}
+
+/* ── FEATURES ── */
+#features{background:var(--navy);}
+.features-grid{
+  max-width:1200px;margin:60px auto 0;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+}
+.feature-card{
+  background:var(--glass);border:1px solid rgba(201,168,76,0.1);
+  border-radius:12px;padding:36px;
+  transition:all 0.3s;position:relative;overflow:hidden;cursor:pointer;
+}
+.feature-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(201,168,76,0.05),transparent);
+  opacity:0;transition:opacity 0.3s;
+}
+.feature-card:hover{border-color:rgba(201,168,76,0.35);transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+.feature-card:hover::before{opacity:1;}
+.feature-icon{font-size:2.4rem;margin-bottom:20px;display:block;}
+.feature-title{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;margin-bottom:12px;color:var(--white);}
+.feature-desc{font-size:0.88rem;color:rgba(245,240,232,0.6);line-height:1.7;}
+.feature-tag{
+  display:inline-block;margin-top:16px;padding:4px 12px;
+  background:var(--glass2);border:1px solid rgba(201,168,76,0.2);
+  border-radius:20px;font-size:0.72rem;color:var(--gold);letter-spacing:1px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* ── DASHBOARD DEMO ── */
+#demo{background:var(--navy2);}
+.demo-inner{max-width:1200px;margin:0 auto;}
+.demo-tabs{display:flex;gap:4px;background:var(--navy3);border-radius:8px;padding:4px;width:fit-content;margin:40px 0 32px;}
+.tab-btn{
+  padding:10px 24px;border-radius:6px;border:none;background:transparent;
+  color:rgba(245,240,232,0.5);font-size:0.85rem;cursor:pointer;transition:all 0.2s;
+  font-family:'DM Sans',sans-serif;font-weight:500;
+}
+.tab-btn.active{background:var(--gold);color:var(--navy);font-weight:700;}
+.tab-btn:hover:not(.active){color:var(--white);}
+.demo-window{
+  background:var(--navy3);border:1px solid rgba(201,168,76,0.15);
+  border-radius:12px;overflow:hidden;box-shadow:var(--shadow);
+}
+.window-bar{
+  background:rgba(255,255,255,0.04);padding:12px 20px;
+  display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.dot{width:10px;height:10px;border-radius:50%;}
+.dot.r{background:#e74c3c;} .dot.y{background:#f39c12;} .dot.g{background:#27ae60;}
+.window-url{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:rgba(245,240,232,0.3);}
+.demo-panel{display:none;padding:32px;}
+.demo-panel.active{display:block;}
+
+/* Dashboard Panel */
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.dash-card{background:var(--navy2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:20px;}
+.dash-num{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;}
+.dash-label{font-size:0.75rem;color:rgba(245,240,232,0.5);margin-top:4px;letter-spacing:0.5px;}
+.dash-change{font-size:0.72rem;margin-top:8px;}
+.dash-change.up{color:var(--green);}
+.dash-change.down{color:var(--red);}
+.case-table{width:100%;border-collapse:collapse;}
+.case-table th{text-align:left;padding:10px 14px;font-size:0.75rem;color:rgba(245,240,232,0.4);letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,0.06);font-weight:500;}
+.case-table td{padding:12px 14px;font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+.status-badge{padding:3px 10px;border-radius:20px;font-size:0.72px;font-weight:600;font-size:0.72rem;}
+.status-badge.filed{background:rgba(41,128,185,0.15);color:#5dade2;}
+.status-badge.hearing{background:rgba(243,156,18,0.15);color:#f39c12;}
+.status-badge.judgment{background:rgba(39,174,96,0.15);color:#2ecc71;}
+.status-badge.urgent{background:rgba(192,57,43,0.15);color:#e74c3c;}
+.priority{display:flex;gap:2px;}
+.priority-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.1);}
+.priority-dot.active{background:var(--gold);}
+
+/* AI Panel */
+.ai-search-box{
+  background:var(--navy2);border:1px solid rgba(201,168,76,0.3);
+  border-radius:8px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:24px;
+}
+.ai-search-box input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.95rem;
+}
+.ai-search-box input::placeholder{color:rgba(245,240,232,0.3);}
+.ai-btn{background:var(--gold);color:var(--navy);border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-weight:700;font-size:0.85rem;white-space:nowrap;}
+.precedent-list{display:flex;flex-direction:column;gap:12px;}
+.precedent-card{
+  background:var(--navy2);border:1px solid rgba(255,255,255,0.06);
+  border-radius:8px;padding:18px;display:flex;align-items:flex-start;gap:16px;
+  transition:border-color 0.2s;cursor:pointer;
+}
+.precedent-card:hover{border-color:rgba(201,168,76,0.3);}
+.prec-score{
+  min-width:52px;height:52px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-weight:900;font-size:1rem;
+  background:linear-gradient(135deg,rgba(201,168,76,0.2),rgba(201,168,76,0.05));
+  color:var(--gold);border:1px solid rgba(201,168,76,0.2);
+}
+.prec-info .prec-title{font-size:0.88rem;font-weight:600;margin-bottom:4px;}
+.prec-info .prec-meta{font-size:0.75rem;color:rgba(245,240,232,0.5);}
+.prec-info .prec-verdict{font-size:0.75rem;margin-top:6px;padding:2px 8px;border-radius:12px;display:inline-block;}
+.prec-verdict.granted{background:rgba(39,174,96,0.15);color:#2ecc71;}
+.prec-verdict.denied{background:rgba(192,57,43,0.15);color:#e74c3c;}
+
+/* Filing Panel */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+.form-group label{font-size:0.78rem;color:rgba(245,240,232,0.5);letter-spacing:0.5px;}
+.form-group input,.form-group select,.form-group textarea{
+  background:var(--navy2);border:1px solid rgba(255,255,255,0.08);
+  border-radius:6px;padding:10px 14px;color:var(--white);
+  font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;
+  transition:border-color 0.2s;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:rgba(201,168,76,0.4);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-group select option{background:var(--navy2);}
+.upload-zone{
+  grid-column:1/-1;border:2px dashed rgba(201,168,76,0.2);
+  border-radius:8px;padding:32px;text-align:center;cursor:pointer;
+  transition:all 0.2s;background:rgba(201,168,76,0.02);
+}
+.upload-zone:hover{border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.04);}
+.upload-zone .upload-icon{font-size:2rem;margin-bottom:8px;}
+.upload-zone p{font-size:0.85rem;color:rgba(245,240,232,0.5);}
+.submit-btn{
+  grid-column:1/-1;background:var(--gold);color:var(--navy);
+  border:none;padding:14px;border-radius:6px;font-weight:700;
+  font-size:0.95rem;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.submit-btn:hover{background:var(--gold2);}
+
+/* Scheduling Panel */
+.schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.ai-prediction-card{
+  background:linear-gradient(135deg,rgba(26,188,156,0.08),rgba(201,168,76,0.05));
+  border:1px solid rgba(26,188,156,0.2);border-radius:12px;padding:24px;
+  grid-column:1/-1;
+}
+.ai-prediction-card h4{color:var(--accent);font-size:0.85rem;letter-spacing:1px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;}
+.prediction-details{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.pred-item{text-align:center;}
+.pred-val{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:var(--gold);}
+.pred-key{font-size:0.72rem;color:rgba(245,240,232,0.5);margin-top:4px;}
+.calendar-mini{background:var(--navy2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:20px;}
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.cal-title{font-weight:600;font-size:0.9rem;}
+.cal-nav{background:none;border:1px solid rgba(255,255,255,0.1);color:var(--white);width:28px;height:28px;border-radius:4px;cursor:pointer;font-size:0.85rem;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+.cal-day-name{font-size:0.65rem;color:rgba(245,240,232,0.4);padding:4px 0;}
+.cal-day{font-size:0.78rem;padding:6px 4px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.cal-day:hover{background:rgba(201,168,76,0.15);}
+.cal-day.today{background:var(--gold);color:var(--navy);font-weight:700;}
+.cal-day.suggested{background:rgba(26,188,156,0.15);color:var(--accent);font-weight:600;}
+.cal-day.hearing{background:rgba(41,128,185,0.15);color:#5dade2;}
+.cal-day.empty{opacity:0;}
+
+/* ── ARCHITECTURE ── */
+#architecture{background:var(--navy);}
+.arch-inner{max-width:1000px;margin:60px auto 0;}
+.arch-layers{display:flex;flex-direction:column;gap:3px;}
+.arch-layer{
+  display:flex;align-items:stretch;border-radius:8px;overflow:hidden;
+  border:1px solid rgba(201,168,76,0.1);transition:all 0.3s;cursor:pointer;
+}
+.arch-layer:hover{border-color:rgba(201,168,76,0.4);transform:scaleX(1.01);}
+.layer-num{
+  min-width:56px;display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-weight:600;font-size:0.85rem;
+  background:rgba(201,168,76,0.08);color:var(--gold);border-right:1px solid rgba(201,168,76,0.1);
+}
+.layer-content{flex:1;padding:20px 28px;background:var(--glass);}
+.layer-name{font-weight:700;font-size:1rem;margin-bottom:4px;}
+.layer-tech{font-size:0.8rem;color:rgba(245,240,232,0.5);}
+.layer-tech span{
+  display:inline-block;margin-right:8px;padding:2px 8px;
+  background:var(--glass2);border:1px solid rgba(201,168,76,0.15);
+  border-radius:12px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.7rem;
+}
+.layer-vs{
+  min-width:120px;display:flex;align-items:center;justify-content:center;padding:12px;
+  background:rgba(192,57,43,0.05);border-left:1px solid rgba(192,57,43,0.1);
+  font-size:0.72rem;color:rgba(192,57,43,0.7);text-align:center;line-height:1.4;
+}
+.layer-vs.has-it{background:rgba(39,174,96,0.05);border-left-color:rgba(39,174,96,0.1);color:rgba(39,174,96,0.7);}
+.arch-connector{height:3px;width:3px;background:var(--gold);border-radius:50%;margin:0 auto;opacity:0.5;}
+
+/* ── LIFECYCLE ── */
+#lifecycle{background:var(--navy2);}
+.lifecycle-inner{max-width:1100px;margin:60px auto 0;}
+.lifecycle-track{display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:20px;}
+.lifecycle-item{display:flex;align-items:center;flex:1;min-width:fit-content;}
+.state-node{
+  background:var(--navy3);border:2px solid rgba(201,168,76,0.2);
+  border-radius:10px;padding:16px 20px;text-align:center;white-space:nowrap;
+  transition:all 0.3s;cursor:pointer;position:relative;
+}
+.state-node:hover,.state-node.active{border-color:var(--gold);background:rgba(201,168,76,0.08);}
+.state-node .state-num{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--gold);margin-bottom:4px;}
+.state-node .state-name{font-size:0.82rem;font-weight:600;}
+.state-arrow{flex:1;height:2px;background:linear-gradient(90deg,rgba(201,168,76,0.3),rgba(201,168,76,0.1));min-width:20px;position:relative;}
+.state-arrow::after{content:'▶';position:absolute;right:-6px;top:50%;transform:translateY(-50%);color:rgba(201,168,76,0.4);font-size:0.7rem;}
+.state-detail{
+  margin-top:32px;background:var(--navy3);border:1px solid rgba(201,168,76,0.2);
+  border-radius:12px;padding:28px;display:none;
+}
+.state-detail.active{display:block;animation:fadeUp 0.4s ease;}
+
+/* ── GOVT COMPARISON ── */
+#comparison{background:var(--navy);}
+.comp-inner{max-width:1100px;margin:60px auto 0;}
+.comp-table{width:100%;border-collapse:separate;border-spacing:0 4px;}
+.comp-table th{
+  text-align:center;padding:14px 20px;font-size:0.75rem;
+  letter-spacing:1.5px;color:rgba(245,240,232,0.5);font-weight:500;
+}
+.comp-table th:first-child{text-align:left;}
+.comp-table th.ours{color:var(--gold);}
+.comp-table td{
+  background:var(--navy2);padding:14px 20px;text-align:center;
+  font-size:0.88rem;transition:background 0.2s;
+}
+.comp-table td:first-child{text-align:left;border-radius:8px 0 0 8px;font-weight:500;}
+.comp-table td:last-child{border-radius:0 8px 8px 0;}
+.comp-table tr:hover td{background:var(--navy3);}
+.comp-table .ours-col{background:rgba(201,168,76,0.06)!important;color:var(--gold);font-weight:600;}
+.check{color:var(--green);font-size:1.1rem;}
+.cross{color:var(--red);font-size:1rem;}
+.partial{color:#f39c12;}
+
+/* ── NOTIFICATIONS DEMO ── */
+#notifications{background:var(--navy2);}
+.notif-demo{max-width:500px;margin:40px auto 0;}
+.notif-card{
+  background:var(--navy3);border:1px solid rgba(255,255,255,0.06);
+  border-radius:10px;padding:16px 20px;margin-bottom:10px;
+  display:flex;gap:14px;align-items:flex-start;
+  transform:translateX(120%);opacity:0;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.notif-card.show{transform:translateX(0);opacity:1;}
+.notif-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.notif-icon.sms{background:rgba(39,174,96,0.15);}
+.notif-icon.email{background:rgba(41,128,185,0.15);}
+.notif-icon.alert{background:rgba(243,156,18,0.15);}
+.notif-icon.ai{background:rgba(26,188,156,0.15);}
+.notif-body .notif-title{font-size:0.88rem;font-weight:600;margin-bottom:3px;}
+.notif-body .notif-text{font-size:0.78rem;color:rgba(245,240,232,0.55);line-height:1.5;}
+.notif-time{font-size:0.7rem;color:rgba(245,240,232,0.3);margin-left:auto;white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+.notif-controls{display:flex;gap:12px;justify-content:center;margin-top:24px;}
+
+/* ── TEAM / CONTACT ── */
+#contact{background:var(--navy3);border-top:1px solid rgba(201,168,76,0.1);}
+.contact-inner{max-width:800px;margin:0 auto;text-align:center;}
+.contact-form{margin-top:48px;text-align:left;}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.contact-btn{
+  width:100%;background:var(--gold);color:var(--navy);
+  border:none;padding:16px;border-radius:6px;font-weight:700;
+  font-size:1rem;cursor:pointer;margin-top:16px;font-family:'DM Sans',sans-serif;
+  transition:all 0.2s;
+}
+.contact-btn:hover{background:var(--gold2);transform:translateY(-2px);}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--navy);border-top:1px solid rgba(201,168,76,0.1);
+  padding:48px 60px 32px;
+}
+.footer-inner{max-width:1200px;margin:0 auto;}
+.footer-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:48px;flex-wrap:wrap;gap:32px;}
+.footer-brand .logo{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:var(--gold);}
+.footer-brand p{color:rgba(245,240,232,0.4);font-size:0.85rem;margin-top:8px;max-width:280px;line-height:1.7;}
+.footer-links h5{color:var(--white);font-size:0.85rem;font-weight:600;margin-bottom:16px;letter-spacing:0.5px;}
+.footer-links ul{list-style:none;}
+.footer-links li{margin-bottom:10px;}
+.footer-links a{color:rgba(245,240,232,0.45);text-decoration:none;font-size:0.83rem;transition:color 0.2s;}
+.footer-links a:hover{color:var(--gold);}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.06);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.footer-bottom p{font-size:0.78rem;color:rgba(245,240,232,0.3);}
+.govt-badge{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;
+  background:var(--glass2);border:1px solid rgba(201,168,76,0.15);border-radius:40px;
+  font-size:0.72rem;color:var(--gold);font-family:'JetBrains Mono',monospace;
+}
+
+/* ── Modal ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:5000;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--navy3);border:1px solid rgba(201,168,76,0.2);
+  border-radius:16px;padding:40px;max-width:520px;width:100%;
+  transform:scale(0.9);transition:transform 0.3s;max-height:90vh;overflow-y:auto;
+}
+.modal-overlay.open .modal{transform:scale(1);}
+.modal h3{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:8px;}
+.modal p{color:rgba(245,240,232,0.6);font-size:0.88rem;margin-bottom:24px;line-height:1.7;}
+.modal-close{
+  position:absolute;top:20px;right:20px;background:none;border:1px solid rgba(255,255,255,0.1);
+  color:var(--white);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.1rem;
+}
+.modal{position:relative;}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:32px;right:32px;z-index:9000;
+  background:var(--navy3);border:1px solid rgba(201,168,76,0.3);
+  border-radius:10px;padding:16px 24px;max-width:320px;
+  transform:translateY(100px);opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  display:flex;align-items:center;gap:12px;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-icon{font-size:1.3rem;}
+.toast-text{font-size:0.88rem;color:var(--white);}
+
+/* ── Scroll animations ── */
+.reveal{opacity:0;transform:translateY(32px);transition:all 0.7s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.1s;}
+.reveal-delay-2{transition-delay:0.2s;}
+.reveal-delay-3{transition-delay:0.3s;}
+
+/* ── LOGIN PAGE ── */
+#login-page{
+  position:fixed;inset:0;z-index:8000;
+  display:none;align-items:center;justify-content:center;
+  background:var(--navy);overflow-y:auto;padding:20px;
+}
+#login-page.active{display:flex;}
+.login-bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 70% 60% at 30% 50%,rgba(201,168,76,0.07) 0%,transparent 65%),radial-gradient(ellipse 50% 70% at 80% 30%,rgba(26,188,156,0.04) 0%,transparent 60%);}
+.login-grid-bg{position:fixed;inset:0;z-index:-1;background-image:linear-gradient(rgba(201,168,76,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.03) 1px,transparent 1px);background-size:48px 48px;}
+.login-wrapper{display:flex;width:100%;max-width:1000px;min-height:600px;border-radius:20px;overflow:hidden;border:1px solid rgba(201,168,76,0.15);box-shadow:0 32px 80px rgba(0,0,0,0.7);animation:loginSlideIn 0.6s cubic-bezier(0.34,1.2,0.64,1) both;}
+@keyframes loginSlideIn{from{opacity:0;transform:scale(0.92) translateY(24px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.login-left{flex:1;background:linear-gradient(145deg,var(--navy3) 0%,#0d1628 100%);padding:56px 48px;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid rgba(201,168,76,0.1);position:relative;overflow:hidden;}
+.login-left::before{content:'';position:absolute;bottom:-60px;right:-60px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.06) 0%,transparent 70%);}
+.login-left-logo{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--gold);}
+.login-left-logo span{color:var(--white);font-weight:400;}
+.login-left-tagline{font-size:0.75rem;color:rgba(245,240,232,0.4);letter-spacing:2px;font-family:'JetBrains Mono',monospace;margin-top:6px;}
+.login-left h2{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:900;line-height:1.2;margin-top:36px;}
+.login-left h2 span{color:var(--gold);}
+.login-left p{color:rgba(245,240,232,0.55);font-size:0.86rem;line-height:1.8;margin-top:12px;}
+.login-role-preview{margin-top:28px;display:flex;flex-direction:column;gap:7px;}
+.role-preview-item{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:8px;border:1px solid rgba(201,168,76,0.1);background:rgba(255,255,255,0.02);font-size:0.8rem;color:rgba(245,240,232,0.6);transition:all 0.2s;cursor:pointer;}
+.role-preview-item:hover,.role-preview-item.selected-role{border-color:rgba(201,168,76,0.35);background:rgba(201,168,76,0.06);color:var(--white);}
+.role-preview-item .rpi-icon{font-size:1rem;min-width:22px;}
+.role-preview-item .rpi-name{font-weight:600;}
+.role-preview-item .rpi-desc{font-size:0.7rem;color:rgba(245,240,232,0.35);margin-left:auto;}
+.login-left-bottom{display:flex;align-items:center;gap:8px;font-size:0.72rem;color:rgba(245,240,232,0.3);}
+.login-left-bottom .green-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+.login-right{width:420px;background:var(--navy2);padding:52px 44px;display:flex;flex-direction:column;justify-content:center;position:relative;}
+.login-close-btn{position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(245,240,232,0.5);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1rem;transition:all 0.2s;display:flex;align-items:center;justify-content:center;}
+.login-close-btn:hover{background:rgba(255,255,255,0.1);color:var(--white);}
+.auth-toggle{display:flex;background:var(--navy3);border-radius:8px;padding:4px;margin-bottom:28px;}
+.auth-toggle-btn{flex:1;padding:9px;border:none;background:transparent;color:rgba(245,240,232,0.45);font-size:0.85rem;font-weight:500;border-radius:6px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.auth-toggle-btn.active{background:var(--gold);color:var(--navy);font-weight:700;}
+.role-selector{margin-bottom:22px;}
+.role-selector label{display:block;font-size:0.72rem;color:rgba(245,240,232,0.4);letter-spacing:1px;margin-bottom:9px;}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.role-btn{padding:10px 6px;border:1.5px solid rgba(255,255,255,0.07);border-radius:8px;background:var(--navy3);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all 0.2s;}
+.role-btn:hover{border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.04);}
+.role-btn.active{border-color:var(--gold);background:rgba(201,168,76,0.1);}
+.role-btn .rb-icon{font-size:1.2rem;}
+.role-btn .rb-name{font-size:0.68rem;font-weight:600;color:var(--white);}
+.login-field{margin-bottom:14px;}
+.login-field label{display:block;font-size:0.7rem;color:rgba(245,240,232,0.4);letter-spacing:1px;margin-bottom:6px;}
+.login-input-wrap{position:relative;}
+.login-input-wrap .field-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:0.85rem;opacity:0.45;}
+.login-field input{width:100%;background:var(--navy3);border:1.5px solid rgba(255,255,255,0.08);border-radius:8px;padding:11px 13px 11px 38px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+.login-field input:focus{border-color:rgba(201,168,76,0.5);box-shadow:0 0 0 3px rgba(201,168,76,0.06);}
+.login-field input::placeholder{color:rgba(245,240,232,0.22);}
+.show-pass{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(245,240,232,0.3);cursor:pointer;font-size:0.8rem;}
+.login-extras{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.remember-wrap{display:flex;align-items:center;gap:7px;font-size:0.78rem;color:rgba(245,240,232,0.5);cursor:pointer;}
+.remember-wrap input{accent-color:var(--gold);width:13px;height:13px;}
+.forgot-link{font-size:0.78rem;color:var(--gold);text-decoration:none;opacity:0.8;}
+.forgot-link:hover{opacity:1;}
+.login-submit{width:100%;background:var(--gold);color:var(--navy);border:none;padding:13px;border-radius:8px;font-weight:700;font-size:0.92rem;cursor:pointer;transition:all 0.25s;font-family:'DM Sans',sans-serif;letter-spacing:0.3px;position:relative;overflow:hidden;}
+.login-submit::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.12) 50%,transparent 100%);transform:translateX(-100%);transition:transform 0.5s;}
+.login-submit:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 6px 24px rgba(201,168,76,0.3);}
+.login-submit:hover::after{transform:translateX(100%);}
+.login-submit.loading{opacity:0.7;pointer-events:none;}
+.login-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:rgba(245,240,232,0.2);font-size:0.72rem;}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07);}
+.demo-accounts{display:flex;flex-direction:column;gap:5px;}
+.demo-acc{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s;}
+.demo-acc:hover{border-color:rgba(201,168,76,0.25);background:rgba(201,168,76,0.04);}
+.demo-acc .da-left{display:flex;align-items:center;gap:8px;font-size:0.78rem;}
+.demo-acc .da-email{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:rgba(245,240,232,0.38);}
+.demo-acc .da-use{font-size:0.68rem;color:var(--gold);font-weight:600;}
+.register-fields{display:none;}
+.register-fields.active{display:block;}
+#welcome-screen{position:fixed;inset:0;z-index:8500;background:var(--navy);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;}
+#welcome-screen.active{display:flex;}
+.welcome-role-badge{font-size:4rem;animation:bounceIn 0.6s cubic-bezier(0.34,1.8,0.64,1) both;}
+@keyframes bounceIn{from{opacity:0;transform:scale(0.3);}to{opacity:1;transform:scale(1);}}
+.welcome-title{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--gold);animation:fadeUp 0.6s 0.2s ease both;}
+.welcome-sub{font-size:0.95rem;color:rgba(245,240,232,0.6);animation:fadeUp 0.6s 0.4s ease both;}
+.welcome-loading{animation:fadeUp 0.6s 0.6s ease both;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:6px;}
+.welcome-bar{width:200px;height:2px;background:rgba(201,168,76,0.15);border-radius:2px;overflow:hidden;}
+.welcome-bar-fill{height:100%;background:var(--gold);width:0%;}
+.welcome-text{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:rgba(245,240,232,0.35);letter-spacing:2px;}
+.nav-user-badge{display:none;align-items:center;gap:8px;padding:6px 14px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:20px;font-size:0.8rem;color:var(--gold);cursor:pointer;}
+.nav-user-badge.show{display:flex;}
+.nav-user-badge .nub-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  nav{padding:16px 24px;}
+  .nav-links{display:none;}
+  section{padding:60px 24px;}
+  #hero{padding:100px 24px 60px;}
+  .features-grid{grid-template-columns:1fr 1fr;}
+  .crisis-inner,.comp-inner{grid-template-columns:1fr;}
+  .form-grid,.contact-grid{grid-template-columns:1fr;}
+  .dash-grid{grid-template-columns:1fr 1fr;}
+  .schedule-grid{grid-template-columns:1fr;}
+  .prediction-details{grid-template-columns:1fr 1fr;}
+  footer{padding:40px 24px 24px;}
+  .footer-top{flex-direction:column;}
+  .lifecycle-track{flex-wrap:nowrap;}
+}
+@media(max-width:600px){
+  .features-grid{grid-template-columns:1fr;}
+  .dash-grid{grid-template-columns:1fr;}
+  .hero-stats{gap:24px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Loader -->
+<div id="loader">
+  <div class="logo-text">NyayaAI</div>
+  <div class="sub">INITIALIZING JUDICIAL INTELLIGENCE</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+  <div class="loader-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- Welcome Screen -->
+<div id="welcome-screen">
+  <div class="welcome-role-badge" id="ws-icon">⚖️</div>
+  <div class="welcome-title" id="ws-title">Welcome, Judge</div>
+  <div class="welcome-sub" id="ws-sub">Loading your personalised dashboard…</div>
+  <div class="welcome-loading">
+    <div class="welcome-bar"><div class="welcome-bar-fill" id="ws-bar"></div></div>
+    <div class="welcome-text" id="ws-status">AUTHENTICATING…</div>
+  </div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div id="login-page">
+  <div class="login-bg"></div>
+  <div class="login-grid-bg"></div>
+  <div class="login-wrapper">
+    <div class="login-left">
+      <div>
+        <div class="login-left-logo">Nyaya<span>AI</span></div>
+        <div class="login-left-tagline">JUDICIAL INTELLIGENCE PLATFORM</div>
+        <h2>India's <span>AI-Powered</span><br>Court Management</h2>
+        <p>Secure access for all court stakeholders. Select your role and sign in to your personalised dashboard.</p>
+        <div class="login-role-preview">
+          <div class="role-preview-item" onclick="selectRoleFromLeft('judge')"><span class="rpi-icon">👨‍⚖️</span><span class="rpi-name">Judge</span><span class="rpi-desc">View cases · AI search</span></div>
+          <div class="role-preview-item" onclick="selectRoleFromLeft('lawyer')"><span class="rpi-icon">👨‍💼</span><span class="rpi-name">Lawyer</span><span class="rpi-desc">File cases · Documents</span></div>
+          <div class="role-preview-item" onclick="selectRoleFromLeft('litigant')"><span class="rpi-icon">👤</span><span class="rpi-name">Litigant</span><span class="rpi-desc">Track case status</span></div>
+          <div class="role-preview-item" onclick="selectRoleFromLeft('clerk')"><span class="rpi-icon">📋</span><span class="rpi-name">Court Clerk</span><span class="rpi-desc">Verify documents</span></div>
+          <div class="role-preview-item" onclick="selectRoleFromLeft('prosecutor')"><span class="rpi-icon">👮</span><span class="rpi-name">Prosecutor</span><span class="rpi-desc">Access case files</span></div>
+          <div class="role-preview-item" onclick="selectRoleFromLeft('admin')"><span class="rpi-icon">🔧</span><span class="rpi-name">Admin</span><span class="rpi-desc">Manage system</span></div>
+        </div>
+      </div>
+      <div class="login-left-bottom"><span class="green-dot"></span> Secured · IT Act 2000 · AES-256 · PDPB 2023 Compliant</div>
+    </div>
+    <div class="login-right">
+      <button class="login-close-btn" onclick="closeLoginPage()">✕</button>
+      <div class="auth-toggle">
+        <button class="auth-toggle-btn active" id="btn-login" onclick="switchAuth('login')">Sign In</button>
+        <button class="auth-toggle-btn" id="btn-register" onclick="switchAuth('register')">New User</button>
+      </div>
+      <div class="role-selector">
+        <label>SELECT YOUR ROLE</label>
+        <div class="role-grid">
+          <button class="role-btn active" onclick="selectRole('judge',this)" id="rb-judge"><span class="rb-icon">👨‍⚖️</span><span class="rb-name">Judge</span></button>
+          <button class="role-btn" onclick="selectRole('lawyer',this)" id="rb-lawyer"><span class="rb-icon">👨‍💼</span><span class="rb-name">Lawyer</span></button>
+          <button class="role-btn" onclick="selectRole('litigant',this)" id="rb-litigant"><span class="rb-icon">👤</span><span class="rb-name">Litigant</span></button>
+          <button class="role-btn" onclick="selectRole('clerk',this)" id="rb-clerk"><span class="rb-icon">📋</span><span class="rb-name">Clerk</span></button>
+          <button class="role-btn" onclick="selectRole('prosecutor',this)" id="rb-prosecutor"><span class="rb-icon">👮</span><span class="rb-name">Prosecutor</span></button>
+          <button class="role-btn" onclick="selectRole('admin',this)" id="rb-admin"><span class="rb-icon">🔧</span><span class="rb-name">Admin</span></button>
+        </div>
+      </div>
+      <div class="register-fields" id="register-fields">
+        <div class="login-field"><label>FULL NAME</label><div class="login-input-wrap"><span class="field-icon">👤</span><input type="text" id="reg-name" placeholder="Enter your full name"></div></div>
+        <div class="login-field"><label>PHONE NUMBER</label><div class="login-input-wrap"><span class="field-icon">📱</span><input type="tel" id="reg-phone" placeholder="+91 XXXXX XXXXX"></div></div>
+      </div>
+      <div class="login-field"><label>EMAIL ADDRESS</label><div class="login-input-wrap"><span class="field-icon">✉️</span><input type="email" id="login-email" placeholder="official@court.gov.in"></div></div>
+      <div class="login-field"><label>PASSWORD</label><div class="login-input-wrap"><span class="field-icon">🔒</span><input type="password" id="login-password" placeholder="Enter your password"><button class="show-pass" onclick="togglePass()" id="pass-toggle">👁</button></div></div>
+      <div class="register-fields" id="register-fields-2">
+        <div class="login-field"><label>CONFIRM PASSWORD</label><div class="login-input-wrap"><span class="field-icon">🔒</span><input type="password" id="reg-confirm" placeholder="Re-enter password"></div></div>
+      </div>
+      <div class="login-extras" id="login-extras">
+        <label class="remember-wrap"><input type="checkbox" id="remember-me"> Remember me</label>
+        <a href="#" class="forgot-link" onclick="forgotPassword(event)">Forgot password?</a>
+      </div>
+      <button class="login-submit" id="login-submit-btn" onclick="handleAuth()">Sign In to NyayaAI →</button>
+      <div id="demo-section">
+        <div class="login-divider">Quick demo access</div>
+        <div class="demo-accounts">
+          <div class="demo-acc" onclick="fillDemo('judge.mehta@bangalore.court.gov.in','Judge@2026','judge')"><div class="da-left"><span>👨‍⚖️</span><div><div style="font-weight:600;color:var(--white)">Judge Kavita Mehta</div><div class="da-email">judge.mehta@bangalore.court.gov.in</div></div></div><span class="da-use">Use →</span></div>
+          <div class="demo-acc" onclick="fillDemo('adv.sharma@karbar.org','Lawyer@2026','lawyer')"><div class="da-left"><span>👨‍💼</span><div><div style="font-weight:600;color:var(--white)">Adv. Priya Sharma</div><div class="da-email">adv.sharma@karbar.org</div></div></div><span class="da-use">Use →</span></div>
+          <div class="demo-acc" onclick="fillDemo('ramesh.kumar@citizen.in','User@2026','litigant')"><div class="da-left"><span>👤</span><div><div style="font-weight:600;color:var(--white)">Ramesh Kumar (Litigant)</div><div class="da-email">ramesh.kumar@citizen.in</div></div></div><span class="da-use">Use →</span></div>
+          <div class="demo-acc" onclick="fillDemo('admin@nyayaai.gov.in','Admin@2026','admin')"><div class="da-left"><span>🔧</span><div><div style="font-weight:600;color:var(--white)">System Admin</div><div class="da-email">admin@nyayaai.gov.in</div></div></div><span class="da-use">Use →</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✅</span>
+  <span class="toast-text" id="toast-text">Action completed successfully</span>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 id="modal-title">Modal Title</h3>
+    <p id="modal-body">Modal content</p>
+    <div id="modal-extra"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">Nyaya<span>AI</span></a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#demo">Dashboard</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#lifecycle">Lifecycle</a>
+    <a href="#comparison">vs eCourts</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="nav-user-badge" id="nav-user-badge" onclick="logoutUser()">
+      <span class="nub-dot"></span>
+      <span id="nav-user-name">Judge Mehta</span>
+      <span style="opacity:0.5;font-size:0.72rem;">· Sign out</span>
+    </div>
+    <button onclick="openLoginPage('login')" id="nav-login-btn" style="background:transparent;border:1px solid rgba(201,168,76,0.35);color:var(--gold);padding:9px 20px;border-radius:4px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;" onmouseover="this.style.background='rgba(201,168,76,0.1)'" onmouseout="this.style.background='transparent'">Sign In</button>
+    <button onclick="openLoginPage('register')" id="nav-register-btn" class="nav-cta" style="border:none;cursor:pointer;font-family:'DM Sans',sans-serif;">New User →</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <svg class="ashoka-bg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="90" stroke="gold" stroke-width="2"/>
+    <circle cx="100" cy="100" r="60" stroke="gold" stroke-width="1"/>
+    <circle cx="100" cy="100" r="8" fill="gold"/>
+    <g id="spokes"></g>
+  </svg>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="badge-dot"></span> POWERED BY AI · INSPIRED BY JUSTICE</div>
+    <h1>
+      Justice,<br><span class="gold">Accelerated</span> by AI
+      <span class="line2">India's Next-Generation Court Management Platform</span>
+    </h1>
+    <p class="hero-desc">
+      5 crore pending cases. 20-year waits for justice. NyayaAI brings artificial intelligence to India's judiciary — automating scheduling, surfacing precedents, and connecting every court stakeholder in one intelligent platform.
+    </p>
+    <div class="hero-buttons">
+      <button class="btn-primary" onclick="openModal('request')">Request Demo</button>
+      <a href="#demo" class="btn-secondary">Explore Dashboard ↓</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num" data-target="50000000" data-suffix="Cr+">0</span><span class="stat-label">Pending Cases in India</span></div>
+      <div class="stat"><span class="stat-num" data-target="70" data-suffix="%">0</span><span class="stat-label">Judge Research Time Saved</span></div>
+      <div class="stat"><span class="stat-num" data-target="6">0</span><span class="stat-label">User Roles Unified</span></div>
+      <div class="stat"><span class="stat-num" data-target="9">0</span><span class="stat-label">Case Lifecycle States</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CRISIS -->
+<section id="crisis">
+  <div class="crisis-inner">
+    <div class="reveal">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-title">India's Judicial <span style="color:var(--red)">Crisis</span></h2>
+      <p class="section-desc">The world's largest democracy faces a judicial emergency. Over 5 crore cases pending, with some litigants waiting decades for justice. The existing eCourts system — built in 2007 — lacks AI, lacks automation, and lacks the intelligence needed for modern justice delivery.</p>
+      <div style="margin-top:32px;display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;font-size:0.9rem;color:rgba(245,240,232,0.7);"><span style="color:var(--gold);font-size:1.1rem;">⚖️</span> Average case takes <strong style="color:var(--white);margin:0 4px;">13 years</strong> to resolve in Indian courts</div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:0.9rem;color:rgba(245,240,232,0.7);"><span style="color:var(--gold);font-size:1.1rem;">📋</span> 66 lakh cases pending for <strong style="color:var(--white);margin:0 4px;">more than 10 years</strong></div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:0.9rem;color:rgba(245,240,232,0.7);"><span style="color:var(--gold);font-size:1.1rem;">💰</span> Government investing <strong style="color:var(--white);margin:0 4px;">₹7,210 crores</strong> in eCourts Phase 3</div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:0.9rem;color:rgba(245,240,232,0.7);"><span style="color:var(--gold);font-size:1.1rem;">🤖</span> AI features still <strong style="color:var(--white);margin:0 4px;">being planned</strong> — NyayaAI has already designed them</div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="crisis-counter">
+        <div class="counter-num" id="bigCounter">5,00,00,000</div>
+        <div class="counter-label">TOTAL PENDING CASES · INDIA · 2025</div>
+      </div>
+      <div class="crisis-bars">
+        <div class="crisis-bar-item"><span>Supreme Court</span><div class="bar-track"><div class="bar-fill" style="width:0%" data-width="18%"></div></div><span>69K</span></div>
+        <div class="crisis-bar-item"><span>High Courts</span><div class="bar-track"><div class="bar-fill" style="width:0%" data-width="55%"></div></div><span>62L</span></div>
+        <div class="crisis-bar-item"><span>District Courts</span><div class="bar-track"><div class="bar-fill" style="width:0%" data-width="100%"></div></div><span>4.4Cr</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div style="max-width:1200px;margin:0 auto;">
+    <div class="reveal"><div class="section-label">What We Built</div><h2 class="section-title">8 Powerful Modules</h2></div>
+    <div class="features-grid">
+      <div class="feature-card reveal" onclick="openFeature('ai')">
+        <span class="feature-icon">🤖</span>
+        <div class="feature-title">AI Precedent Engine</div>
+        <div class="feature-desc">NLP-powered search across 10+ years of judgments. Finds similar cases in under 5 seconds with 85%+ relevance accuracy — saving judges days of manual research.</div>
+        <span class="feature-tag">NLP · ELASTICSEARCH</span>
+      </div>
+      <div class="feature-card reveal reveal-delay-1" onclick="openFeature('schedule')">
+        <span class="feature-icon">📅</span>
+        <div class="feature-title">Intelligent Scheduler</div>
+        <div class="feature-desc">ML model predicts optimal hearing dates based on judge availability, case complexity, and court load. Reduces scheduling conflicts by 60%.</div>
+        <span class="feature-tag">ML · PREDICTION</span>
+      </div>
+      <div class="feature-card reveal reveal-delay-2" onclick="openFeature('lifecycle')">
+        <span class="feature-icon">⚖️</span>
+        <div class="feature-title">Case Lifecycle Tracker</div>
+        <div class="feature-desc">Real-time tracking through 9 distinct states — from Filing to Judgment. State machine with 15+ transition rules handles all legal scenarios.</div>
+        <span class="feature-tag">STATE MACHINE</span>
+      </div>
+      <div class="feature-card reveal" onclick="openFeature('rbac')">
+        <span class="feature-icon">🔐</span>
+        <div class="feature-title">Role-Based Access</div>
+        <div class="feature-desc">6 distinct secure portals for Judge, Lawyer, Litigant, Court Clerk, Prosecutor, and Admin. IT Act 2000 compliant with AES-256 encryption.</div>
+        <span class="feature-tag">SECURITY · RBAC</span>
+      </div>
+      <div class="feature-card reveal reveal-delay-1" onclick="openFeature('docs')">
+        <span class="feature-icon">📄</span>
+        <div class="feature-title">Document Management</div>
+        <div class="feature-desc">Encrypted legal document storage with version control, digital signatures, and tamper detection. Supports PDF, DOCX, and image formats.</div>
+        <span class="feature-tag">AES-256 · VERSION CONTROL</span>
+      </div>
+      <div class="feature-card reveal reveal-delay-2" onclick="openFeature('notify')">
+        <span class="feature-icon">🔔</span>
+        <div class="feature-title">Real-Time Notifications</div>
+        <div class="feature-desc">Automated SMS and email alerts within 2 minutes of any case status change. Observer pattern ensures all parties stay informed instantly.</div>
+        <span class="feature-tag">OBSERVER PATTERN</span>
+      </div>
+      <div class="feature-card reveal" onclick="openFeature('analytics')">
+        <span class="feature-icon">📊</span>
+        <div class="feature-title">Analytics Dashboard</div>
+        <div class="feature-desc">Court pendency reports, judge performance metrics, utilization statistics. PDF and Excel export for administrative decision-making.</div>
+        <span class="feature-tag">REPORTING · ANALYTICS</span>
+      </div>
+      <div class="feature-card reveal reveal-delay-1" onclick="openFeature('offline')">
+        <span class="feature-icon">📡</span>
+        <div class="feature-title">Offline Sync</div>
+        <div class="feature-desc">Progressive Web App designed for district courts with poor connectivity. Data syncs automatically when connection is restored.</div>
+        <span class="feature-tag">PWA · OFFLINE FIRST</span>
+      </div>
+      <div class="feature-card reveal reveal-delay-2" style="background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(26,188,156,0.05));border-color:rgba(201,168,76,0.25);" onclick="openFeature('appeal')">
+        <span class="feature-icon">🏛️</span>
+        <div class="feature-title">Appeal Management</div>
+        <div class="feature-desc">Electronic appeal filing within statutory time limits. Automatic escalation to higher court systems with complete case history transfer.</div>
+        <span class="feature-tag">MULTI-COURT · ESCALATION</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO DASHBOARD -->
+<section id="demo">
+  <div class="demo-inner">
+    <div class="reveal"><div class="section-label">Live Dashboard</div><h2 class="section-title">See It In Action</h2></div>
+    <div class="demo-tabs">
+      <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+      <button class="tab-btn" onclick="switchTab('ai')">🤖 AI Search</button>
+      <button class="tab-btn" onclick="switchTab('filing')">📋 File Case</button>
+      <button class="tab-btn" onclick="switchTab('scheduling')">📅 Scheduling</button>
+    </div>
+    <div class="demo-window">
+      <div class="window-bar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <div class="window-url">https://nyayaai.gov.in/dashboard</div>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div class="demo-panel active" id="tab-dashboard">
+        <div class="dash-grid">
+          <div class="dash-card"><div class="dash-num" style="color:var(--gold)">247</div><div class="dash-label">Active Cases</div><div class="dash-change up">↑ 12 this week</div></div>
+          <div class="dash-card"><div class="dash-num" style="color:#5dade2">18</div><div class="dash-label">Today's Hearings</div><div class="dash-change up">↑ 3 scheduled</div></div>
+          <div class="dash-card"><div class="dash-num" style="color:#e74c3c">7</div><div class="dash-label">Urgent Cases</div><div class="dash-change down">↓ AI flagged</div></div>
+          <div class="dash-card"><div class="dash-num" style="color:#2ecc71">94</div><div class="dash-label">Cases Resolved</div><div class="dash-change up">↑ This month</div></div>
+        </div>
+        <table class="case-table">
+          <thead><tr><th>CASE ID</th><th>CASE TYPE</th><th>PARTIES</th><th>JUDGE</th><th>NEXT HEARING</th><th>STATUS</th><th>PRIORITY</th></tr></thead>
+          <tbody>
+            <tr onclick="showCaseDetail('CAS-2026-00847')">
+              <td style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.8rem">CAS-2026-00847</td>
+              <td>Bail Application</td><td>State vs Sharma R.</td><td>Hon. K. Mehta</td>
+              <td>07 Mar 2026</td><td><span class="status-badge urgent">URGENT</span></td>
+              <td><div class="priority"><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot active"></div></div></td>
+            </tr>
+            <tr onclick="showCaseDetail('CAS-2026-00831')">
+              <td style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.8rem">CAS-2026-00831</td>
+              <td>Property Dispute</td><td>Verma vs Gupta</td><td>Hon. S. Rao</td>
+              <td>12 Mar 2026</td><td><span class="status-badge hearing">HEARING</span></td>
+              <td><div class="priority"><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot"></div><div class="priority-dot"></div></div></td>
+            </tr>
+            <tr onclick="showCaseDetail('CAS-2026-00819')">
+              <td style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.8rem">CAS-2026-00819</td>
+              <td>Criminal Case</td><td>State vs Kumar A.</td><td>Hon. P. Singh</td>
+              <td>15 Mar 2026</td><td><span class="status-badge filed">ADMITTED</span></td>
+              <td><div class="priority"><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot"></div><div class="priority-dot"></div><div class="priority-dot"></div></div></td>
+            </tr>
+            <tr onclick="showCaseDetail('CAS-2026-00804')">
+              <td style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.8rem">CAS-2026-00804</td>
+              <td>Family Matter</td><td>Patel vs Patel</td><td>Hon. A. Iyer</td>
+              <td>20 Mar 2026</td><td><span class="status-badge judgment">JUDGMENT</span></td>
+              <td><div class="priority"><div class="priority-dot active"></div><div class="priority-dot"></div><div class="priority-dot"></div><div class="priority-dot"></div><div class="priority-dot"></div></div></td>
+            </tr>
+            <tr onclick="showCaseDetail('CAS-2026-00798')">
+              <td style="color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:0.8rem">CAS-2026-00798</td>
+              <td>Corporate Dispute</td><td>TechCorp vs StartX</td><td>Hon. R. Krishnan</td>
+              <td>22 Mar 2026</td><td><span class="status-badge filed">FILED</span></td>
+              <td><div class="priority"><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot active"></div><div class="priority-dot"></div></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- AI Tab -->
+      <div class="demo-panel" id="tab-ai">
+        <div class="ai-search-box">
+          <span>🤖</span>
+          <input type="text" id="ai-input" placeholder="Search legal precedents... e.g. 'bail application IPC 302'" value="bail application murder accused first offender">
+          <button class="ai-btn" onclick="runAISearch()">Search Precedents</button>
+        </div>
+        <div style="font-size:0.78rem;color:rgba(245,240,232,0.4);margin-bottom:16px;font-family:'JetBrains Mono',monospace;">
+          AI found <span style="color:var(--gold)" id="result-count">4</span> relevant precedents · Response time: <span style="color:var(--accent)">1.2s</span>
+        </div>
+        <div class="precedent-list" id="precedent-list">
+          <div class="precedent-card"><div class="prec-score">97%</div><div class="prec-info"><div class="prec-title">State of Maharashtra vs Pramod Kumar (2023) — Supreme Court</div><div class="prec-meta">IPC 302 · First Offender · No Criminal History · Similar Circumstances</div><span class="prec-verdict granted">Bail Granted</span></div></div>
+          <div class="precedent-card"><div class="prec-score">91%</div><div class="prec-info"><div class="prec-title">Arnesh Kumar vs State of Bihar (2014) — Supreme Court</div><div class="prec-meta">Landmark bail guidelines · Section 41 CrPC · Magistrate powers</div><span class="prec-verdict granted">Guidelines Issued</span></div></div>
+          <div class="precedent-card"><div class="prec-score">84%</div><div class="prec-info"><div class="prec-title">Sanjay Chandra vs CBI (2011) — Supreme Court</div><div class="prec-meta">Economic offense · Bail principles · Personal liberty vs investigation</div><span class="prec-verdict granted">Bail Granted</span></div></div>
+          <div class="precedent-card"><div class="prec-score">79%</div><div class="prec-info"><div class="prec-title">Gudikanti Narasimhulu vs PP High Court (1978) — Supreme Court</div><div class="prec-meta">Constitutional bail principles · Article 21 · Freedom vs security</div><span class="prec-verdict denied">Bail Denied</span></div></div>
+        </div>
+      </div>
+
+      <!-- Filing Tab -->
+      <div class="demo-panel" id="tab-filing">
+        <div class="form-grid">
+          <div class="form-group"><label>CASE TYPE</label><select><option>Criminal Case</option><option>Civil Dispute</option><option>Family Matter</option><option>Bail Application</option><option>Corporate Dispute</option><option>Property Dispute</option></select></div>
+          <div class="form-group"><label>COURT JURISDICTION</label><select><option>Bangalore City Civil Court</option><option>Karnataka High Court</option><option>District Court, Mysuru</option><option>Fast Track Court</option></select></div>
+          <div class="form-group"><label>PETITIONER NAME</label><input type="text" placeholder="Full legal name" value="Ramesh Kumar Sharma"></div>
+          <div class="form-group"><label>RESPONDENT NAME</label><input type="text" placeholder="Full legal name" value="State of Karnataka"></div>
+          <div class="form-group"><label>ADVOCATE BAR ID</label><input type="text" placeholder="KAR/ADV/XXXXX" value="KAR/ADV/20847"></div>
+          <div class="form-group"><label>DATE OF INCIDENT</label><input type="date" value="2026-01-15"></div>
+          <div class="form-group full"><label>CASE DESCRIPTION</label><textarea placeholder="Describe the case in detail...">Application for bail under Section 437 CrPC. Accused is a first-time offender with no prior criminal record. Cooperating fully with investigation...</textarea></div>
+          <div class="upload-zone full" onclick="showToast('📎 Document upload ready — select your files')">
+            <div class="upload-icon">📎</div>
+            <p>Drop FIR, Evidence & Legal Documents here · PDF, DOCX, Images supported</p>
+          </div>
+          <button class="submit-btn" onclick="submitCase()">⚖️ File Case — Generate Case Number</button>
+        </div>
+      </div>
+
+      <!-- Scheduling Tab -->
+      <div class="demo-panel" id="tab-scheduling">
+        <div class="ai-prediction-card">
+          <h4>🤖 AI SCHEDULING PREDICTION — CAS-2026-00847</h4>
+          <div class="prediction-details">
+            <div class="pred-item"><div class="pred-val">7 Mar</div><div class="pred-key">Optimal Date</div></div>
+            <div class="pred-item"><div class="pred-val" style="color:var(--red)">URGENT</div><div class="pred-key">Priority Level</div></div>
+            <div class="pred-item"><div class="pred-val">~45 min</div><div class="pred-key">Est. Duration</div></div>
+          </div>
+        </div>
+        <div class="schedule-grid">
+          <div class="calendar-mini">
+            <div class="cal-header"><button class="cal-nav">‹</button><span class="cal-title">March 2026</span><button class="cal-nav">›</button></div>
+            <div class="cal-days">
+              <div class="cal-day-name">S</div><div class="cal-day-name">M</div><div class="cal-day-name">T</div><div class="cal-day-name">W</div><div class="cal-day-name">T</div><div class="cal-day-name">F</div><div class="cal-day-name">S</div>
+              <div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day">1</div>
+              <div class="cal-day">2</div><div class="cal-day">3</div><div class="cal-day">4</div><div class="cal-day today">5</div><div class="cal-day">6</div><div class="cal-day suggested" title="AI Suggested">7</div><div class="cal-day">8</div>
+              <div class="cal-day">9</div><div class="cal-day">10</div><div class="cal-day">11</div><div class="cal-day hearing">12</div><div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div>
+              <div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day hearing">20</div><div class="cal-day">21</div><div class="cal-day suggested">22</div>
+              <div class="cal-day">23</div><div class="cal-day">24</div><div class="cal-day">25</div><div class="cal-day">26</div><div class="cal-day">27</div><div class="cal-day">28</div><div class="cal-day">29</div>
+              <div class="cal-day">30</div><div class="cal-day">31</div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:12px;font-size:0.72rem;">
+              <span><span style="color:var(--gold)">■</span> Today</span>
+              <span><span style="color:var(--accent)">■</span> AI Suggested</span>
+              <span><span style="color:#5dade2">■</span> Hearing</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="background:var(--navy2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px;">
+              <div style="font-size:0.78rem;color:rgba(245,240,232,0.5);margin-bottom:8px;letter-spacing:0.5px;">ASSIGNED JUDGE</div>
+              <div style="font-weight:600;">Hon. Kavita Mehta</div>
+              <div style="font-size:0.78rem;color:rgba(245,240,232,0.5);margin-top:4px;">Criminal Law Specialist · 18 yrs experience</div>
+              <div style="margin-top:8px;font-size:0.78rem;"><span style="color:var(--green)">● Available</span> on 7 Mar 2026</div>
+            </div>
+            <div style="background:var(--navy2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px;">
+              <div style="font-size:0.78rem;color:rgba(245,240,232,0.5);margin-bottom:8px;">COURT ROOM</div>
+              <div style="font-weight:600;">Court Hall No. 3</div>
+              <div style="font-size:0.78rem;color:rgba(245,240,232,0.5);margin-top:4px;">Bangalore City Civil Court</div>
+              <div style="margin-top:8px;font-size:0.78rem;"><span style="color:var(--accent)">● 2 hearings scheduled</span></div>
+            </div>
+            <button class="submit-btn" style="margin:0" onclick="showToast('📅 Hearing scheduled! Notifications sent to all parties.')">Confirm & Notify All Parties</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div style="max-width:1000px;margin:0 auto;">
+    <div class="reveal"><div class="section-label">System Design</div><h2 class="section-title">5-Layer Architecture</h2><p class="section-desc">Every layer has a clear responsibility. No layer skips another. This separation of concerns is what makes NyayaAI secure, scalable, and maintainable.</p></div>
+    <div class="arch-layers reveal" style="margin-top:48px;">
+      <div class="arch-layer" onclick="showLayerDetail(1)">
+        <div class="layer-num">L1</div>
+        <div class="layer-content"><div class="layer-name">🖥️ Presentation Layer</div><div class="layer-tech"><span>React.js</span><span>Progressive Web App</span><span>Responsive UI</span><span>6 Role Dashboards</span></div></div>
+        <div class="layer-vs has-it">✓ Govt has this</div>
+      </div>
+      <div class="arch-connector"></div>
+      <div class="arch-layer" onclick="showLayerDetail(2)">
+        <div class="layer-num">L2</div>
+        <div class="layer-content"><div class="layer-name">⚙️ Business Logic Layer</div><div class="layer-tech"><span>Node.js</span><span>REST APIs</span><span>Case Workflows</span><span>Role-Based Access</span></div></div>
+        <div class="layer-vs has-it">✓ Govt has basic version</div>
+      </div>
+      <div class="arch-connector"></div>
+      <div class="arch-layer" style="border-color:rgba(201,168,76,0.4);box-shadow:0 0 30px rgba(201,168,76,0.08);" onclick="showLayerDetail(3)">
+        <div class="layer-num" style="background:rgba(201,168,76,0.15);color:var(--gold2);">L3</div>
+        <div class="layer-content"><div class="layer-name">🤖 AI Processing Layer <span style="font-size:0.72rem;color:var(--gold);background:rgba(201,168,76,0.1);padding:2px 8px;border-radius:12px;margin-left:8px;">UNIQUE TO NYAYAAI</span></div><div class="layer-tech"><span>NLP Engine</span><span>ML Scheduler</span><span>Priority Classifier</span><span>Case Summarizer</span></div></div>
+        <div class="layer-vs">✗ Govt MISSING this</div>
+      </div>
+      <div class="arch-connector"></div>
+      <div class="arch-layer" onclick="showLayerDetail(4)">
+        <div class="layer-num">L4</div>
+        <div class="layer-content"><div class="layer-name">⚡ Data Access Layer</div><div class="layer-tech"><span>Redis Cache</span><span>ORM Queries</span><span>Connection Pool</span><span>1000x Faster</span></div></div>
+        <div class="layer-vs">✗ Govt MISSING this</div>
+      </div>
+      <div class="arch-connector"></div>
+      <div class="arch-layer" onclick="showLayerDetail(5)">
+        <div class="layer-num">L5</div>
+        <div class="layer-content"><div class="layer-name">🗄️ Database Layer</div><div class="layer-tech"><span>PostgreSQL</span><span>Elasticsearch</span><span>Redis</span><span>AWS S3</span></div></div>
+        <div class="layer-vs has-it">~ Basic DB only</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIFECYCLE -->
+<section id="lifecycle">
+  <div class="lifecycle-inner">
+    <div class="reveal"><div class="section-label">Case Journey</div><h2 class="section-title">9-State Case Lifecycle</h2><p class="section-desc">Every case follows a precisely defined state machine. Click any state to learn what happens at that stage.</p></div>
+    <div class="lifecycle-track reveal" style="margin-top:48px;">
+      <div class="lifecycle-item"><div class="state-node active" onclick="showState(1)"><div class="state-num">S1</div><div class="state-name">Filed</div></div><div class="state-arrow"></div></div>
+      <div class="lifecycle-item"><div class="state-node" onclick="showState(2)"><div class="state-num">S2</div><div class="state-name">Verified</div></div><div class="state-arrow"></div></div>
+      <div class="lifecycle-item"><div class="state-node" onclick="showState(3)"><div class="state-num">S3</div><div class="state-name">Admitted</div></div><div class="state-arrow"></div></div>
+      <div class="lifecycle-item"><div class="state-node" onclick="showState(4)"><div class="state-num">S4</div><div class="state-name">Scheduled</div></div><div class="state-arrow"></div></div>
+      <div class="lifecycle-item"><div class="state-node" onclick="showState(5)"><div class="state-num">S5</div><div class="state-name">Hearing</div></div><div class="state-arrow"></div></div>
+      <div class="lifecycle-item"><div class="state-node" onclick="showState(6)"><div class="state-num">S6</div><div class="state-name">Reserved</div></div><div class="state-arrow"></div></div>
+      <div class="lifecycle-item"><div class="state-node" onclick="showState(7)"><div class="state-num">S7</div><div class="state-name">Delivered</div></div><div class="state-arrow"></div></div>
+      <div class="lifecycle-item"><div class="state-node" onclick="showState(8)"><div class="state-num">S8</div><div class="state-name">Appeal</div></div><div class="state-arrow"></div></div>
+      <div class="lifecycle-item"><div class="state-node" onclick="showState(9)" style="border-color:rgba(39,174,96,0.4);"><div class="state-num">S9</div><div class="state-name">Closed</div></div></div>
+    </div>
+    <div class="state-detail active" id="state-detail">
+      <div id="state-detail-content">
+        <strong style="color:var(--gold);font-family:'Playfair Display',serif;font-size:1.2rem;">S1 — FILED</strong>
+        <p style="margin-top:8px;color:rgba(245,240,232,0.7);font-size:0.9rem;line-height:1.7;">Lawyer submits case online with all supporting documents. System auto-generates unique Case Number (CAS-2026-XXXXX). AI calculates priority score instantly. Case appears in Court Clerk's verification queue.</p>
+        <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;">
+          <span style="padding:4px 12px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:20px;font-size:0.75rem;color:var(--gold);">Entry: Lawyer submits case form</span>
+          <span style="padding:4px 12px;background:rgba(41,128,185,0.1);border:1px solid rgba(41,128,185,0.2);border-radius:20px;font-size:0.75rem;color:#5dade2;">Exit: Clerk begins verification</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section id="comparison">
+  <div class="comp-inner">
+    <div class="reveal"><div class="section-label">Competitive Analysis</div><h2 class="section-title">NyayaAI vs Existing Systems</h2></div>
+    <table class="comp-table reveal" style="margin-top:48px;">
+      <thead><tr><th>Feature</th><th>🏛️ eCourts (Govt)</th><th>🔬 SUPACE</th><th>⚖️ Themis (USA)</th><th class="ours">🚀 NyayaAI</th></tr></thead>
+      <tbody>
+        <tr><td>AI Precedent Search</td><td><span class="cross">✗</span></td><td><span class="partial">◐ SC Only</span></td><td><span class="cross">✗</span></td><td class="ours-col"><span class="check">✓</span> All Courts</td></tr>
+        <tr><td>ML Hearing Scheduler</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="ours-col"><span class="check">✓</span> Predictive</td></tr>
+        <tr><td>All 6 User Types</td><td><span class="partial">◐ Partial</span></td><td><span class="partial">◐ Judges Only</span></td><td><span class="partial">◐ Lawyers Only</span></td><td class="ours-col"><span class="check">✓</span> Complete</td></tr>
+        <tr><td>Real-Time Notifications</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="check">✓</span></td><td class="ours-col"><span class="check">✓</span> 2-min delivery</td></tr>
+        <tr><td>Offline District Courts</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="ours-col"><span class="check">✓</span> PWA Sync</td></tr>
+        <tr><td>Indian Legal Procedures</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✗</span> US Only</td><td class="ours-col"><span class="check">✓</span> CrPC + CPC</td></tr>
+        <tr><td>5-Layer Architecture</td><td><span class="cross">✗</span> 3-Layer</td><td><span class="cross">✗</span></td><td><span class="partial">◐</span></td><td class="ours-col"><span class="check">✓</span> Full Stack</td></tr>
+        <tr><td>Audit Trail</td><td><span class="partial">◐ Basic</span></td><td><span class="cross">✗</span></td><td><span class="check">✓</span></td><td class="ours-col"><span class="check">✓</span> Immutable</td></tr>
+        <tr><td>Appeal Management</td><td><span class="partial">◐ Manual</span></td><td><span class="cross">✗</span></td><td><span class="check">✓</span></td><td class="ours-col"><span class="check">✓</span> Automated</td></tr>
+        <tr><td>Open for District Courts</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="ours-col"><span class="check">✓</span> All Levels</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- NOTIFICATIONS -->
+<section id="notifications" style="text-align:center;">
+  <div class="reveal"><div class="section-label">Observer Pattern in Action</div><h2 class="section-title">Real-Time Notifications</h2><p class="section-desc" style="margin:0 auto;">When any case event occurs, all subscribed parties receive instant notifications. Watch it live.</p></div>
+  <div class="notif-demo">
+    <div id="notif-feed"></div>
+    <div class="notif-controls">
+      <button class="btn-primary" onclick="triggerNotifications()">▶ Trigger Case Event</button>
+      <button class="btn-secondary" onclick="clearNotifications()">Clear</button>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="reveal"><div class="section-label">Get In Touch</div><h2 class="section-title">Request a Demo</h2><p class="section-desc" style="margin:0 auto;">Whether you are a court administrator, a government official, or a legal tech investor — we would love to show you NyayaAI in action.</p></div>
+    <div class="contact-form reveal">
+      <div class="contact-grid">
+        <div class="form-group"><label>YOUR NAME</label><input type="text" placeholder="Full Name" id="c-name"></div>
+        <div class="form-group"><label>ORGANIZATION</label><input type="text" placeholder="Court / Ministry / Company" id="c-org"></div>
+        <div class="form-group"><label>EMAIL ADDRESS</label><input type="email" placeholder="official@gov.in" id="c-email"></div>
+        <div class="form-group"><label>PHONE NUMBER</label><input type="tel" placeholder="+91 XXXXX XXXXX" id="c-phone"></div>
+        <div class="form-group" style="grid-column:1/-1"><label>YOUR MESSAGE</label><textarea placeholder="Tell us about your court's specific needs..." style="min-height:100px;" id="c-msg"></textarea></div>
+      </div>
+      <button class="contact-btn" onclick="submitContact()">Send Request — We'll Respond Within 24 Hours</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo">NyayaAI</div>
+        <p>AI-Powered Legal Case Management System. Built to solve India's 5-crore pending cases crisis through intelligent technology.</p>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="padding:4px 12px;background:var(--glass2);border:1px solid rgba(201,168,76,0.15);border-radius:20px;font-size:0.72rem;color:var(--gold);">🏛️ eCourts Inspired</span>
+          <span style="padding:4px 12px;background:var(--glass2);border:1px solid rgba(201,168,76,0.15);border-radius:20px;font-size:0.72rem;color:var(--gold);">🤖 AI Powered</span>
+          <span style="padding:4px 12px;background:var(--glass2);border:1px solid rgba(201,168,76,0.15);border-radius:20px;font-size:0.72rem;color:var(--gold);">🇮🇳 Made for India</span>
+        </div>
+      </div>
+      <div class="footer-links"><h5>Platform</h5><ul><li><a href="#features">Features</a></li><li><a href="#demo">Live Dashboard</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#lifecycle">Case Lifecycle</a></li></ul></div>
+      <div class="footer-links"><h5>Legal Tech</h5><ul><li><a href="#">eCourts Integration</a></li><li><a href="#">NJDG Sync</a></li><li><a href="#">SUPACE Comparison</a></li><li><a href="#">IT Act Compliance</a></li></ul></div>
+      <div class="footer-links"><h5>Project</h5><ul><li><a href="#">SRS Document</a></li><li><a href="#">UML Diagrams</a></li><li><a href="#">Architecture Docs</a></li><li><a href="#contact">Contact Team</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 NyayaAI · B.M.S. College of Engineering, Bangalore · SE & Project Management Project</p>
+      <div class="govt-badge">🇮🇳 Aligned with e-Courts Phase 3 · Digital India Initiative</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── Cursor ──────────────────────────────────────────────────────────────────
+const cur = document.getElementById('cursor');
+const curRing = document.getElementById('cursor-ring');
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
+  setTimeout(() => { curRing.style.left = e.clientX + 'px'; curRing.style.top = e.clientY + 'px'; }, 80);
+});
+document.querySelectorAll('a,button,.feature-card,.arch-layer,.state-node,.precedent-card,.case-table tr').forEach(el => {
+  el.addEventListener('mouseenter', () => { cur.style.width = '20px'; cur.style.height = '20px'; curRing.style.width = '52px'; curRing.style.height = '52px'; curRing.style.borderColor = 'rgba(201,168,76,0.8)'; });
+  el.addEventListener('mouseleave', () => { cur.style.width = '12px'; cur.style.height = '12px'; curRing.style.width = '36px'; curRing.style.height = '36px'; curRing.style.borderColor = 'var(--gold)'; });
+});
+
+// ── Loader ──────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    loader.style.opacity = '0';
+    setTimeout(() => { loader.style.display = 'none'; }, 800);
+  }, 2200);
+});
+
+// ── Nav scroll ──────────────────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ── Scroll reveal ──────────────────────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── Bar chart animation ──────────────────────────────────────────────────────
+const barObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      e.target.querySelectorAll('.bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width;
+      });
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.crisis-bars').forEach(el => barObserver.observe(el));
+
+// ── Counter animation ──────────────────────────────────────────────────────
+function animateCounter(el, target, suffix) {
+  let current = 0;
+  const step = target / 60;
+  const interval = setInterval(() => {
+    current = Math.min(current + step, target);
+    if(target >= 1000000) el.textContent = (current/10000000).toFixed(1) + ' Cr+';
+    else if(suffix === '%') el.textContent = Math.round(current) + '%';
+    else el.textContent = Math.round(current);
+    if(current >= target) clearInterval(interval);
+  }, 25);
+}
+const counterObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      e.target.querySelectorAll('[data-target]').forEach(el => {
+        animateCounter(el, parseInt(el.dataset.target), el.dataset.suffix || '');
+      });
+      counterObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.hero-stats').forEach(el => counterObserver.observe(el));
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.demo-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  const urls = { dashboard:'nyayaai.gov.in/dashboard', ai:'nyayaai.gov.in/ai/precedents', filing:'nyayaai.gov.in/cases/file', scheduling:'nyayaai.gov.in/schedule' };
+  document.querySelector('.window-url').textContent = 'https://' + (urls[tab] || 'nyayaai.gov.in');
+}
+
+// ── AI Search ───────────────────────────────────────────────────────────────
+function runAISearch() {
+  const query = document.getElementById('ai-input').value;
+  const list = document.getElementById('precedent-list');
+  list.style.opacity = '0.3';
+  list.style.transition = 'opacity 0.3s';
+  setTimeout(() => {
+    list.style.opacity = '1';
+    document.getElementById('result-count').textContent = Math.floor(Math.random()*3)+3;
+    showToast('🤖 AI found ' + document.getElementById('result-count').textContent + ' relevant precedents in 1.' + Math.floor(Math.random()*9) + 's');
+  }, 800);
+}
+
+// ── Case Filing ─────────────────────────────────────────────────────────────
+function submitCase() {
+  const caseNum = 'CAS-2026-' + String(Math.floor(Math.random()*90000)+10000);
+  openModal('filed', caseNum);
+}
+
+// ── Case Detail ─────────────────────────────────────────────────────────────
+function showCaseDetail(caseId) {
+  document.getElementById('modal-title').textContent = '⚖️ ' + caseId;
+  document.getElementById('modal-body').textContent = 'Case details loaded from NyayaAI database. Click on any hearing date to reschedule, or use the AI engine to find similar precedents for this case type.';
+  document.getElementById('modal-extra').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:14px;"><div style="font-size:0.72rem;color:rgba(245,240,232,0.4);margin-bottom:4px;">STATUS</div><div style="color:var(--gold);font-weight:600;">Under Hearing</div></div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:14px;"><div style="font-size:0.72rem;color:rgba(245,240,232,0.4);margin-bottom:4px;">PRIORITY SCORE</div><div style="color:#e74c3c;font-weight:600;">9.2 / 10</div></div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:14px;"><div style="font-size:0.72rem;color:rgba(245,240,232,0.4);margin-bottom:4px;">NEXT HEARING</div><div style="font-weight:600;">07 Mar 2026</div></div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:14px;"><div style="font-size:0.72rem;color:rgba(245,240,232,0.4);margin-bottom:4px;">AI PRECEDENTS</div><div style="color:var(--accent);font-weight:600;">4 Found</div></div>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="closeModal();showToast('🤖 Opening AI Precedent Engine...')">Open AI Precedent Search →</button>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+// ── Layer Detail ─────────────────────────────────────────────────────────────
+const layerInfo = {
+  1: {t:'L1 — Presentation Layer', b:'React.js-based responsive dashboards for all 6 user types. Progressive Web App supports offline usage in district courts. Mobile-first design ensures accessibility on basic smartphones used by litigants in rural areas.'},
+  2: {t:'L2 — Business Logic Layer', b:'Node.js controllers handle case workflows, role-based access control, auto case number generation, and judge assignment logic. This is the brain of NyayaAI — all business rules live here, separated from both UI and database.'},
+  3: {t:'L3 — AI Processing Layer ⭐', b:'The most unique layer. Contains our NLP-based precedent search engine (using vector embeddings), ML scheduling predictor (gradient boosted model), and priority classifier. This layer DOES NOT EXIST in the government\'s current eCourts system — making it our core innovation.'},
+  4: {t:'L4 — Data Access Layer', b:'Redis caching stores frequently accessed data (case status, hearing dates) in memory — making queries 1000x faster than hitting the database every time. ORM-based database abstraction ensures the system can switch databases without changing business logic.'},
+  5: {t:'L5 — Database Layer', b:'PostgreSQL stores structured case data with ACID compliance. Elasticsearch powers full-text search across 10+ years of judgments for our AI engine. Redis handles sessions. AWS S3 stores all uploaded legal documents with AES-256 encryption.'},
+};
+function showLayerDetail(n) {
+  const info = layerInfo[n];
+  document.getElementById('modal-title').textContent = info.t;
+  document.getElementById('modal-body').textContent = info.b;
+  document.getElementById('modal-extra').innerHTML = '';
+  document.getElementById('modal').classList.add('open');
+}
+
+// ── State Machine ─────────────────────────────────────────────────────────────
+const stateInfo = {
+  1: {n:'S1 — FILED', d:'Lawyer submits case online with all supporting documents. System auto-generates unique Case Number (CAS-2026-XXXXX). AI immediately calculates a priority score from 1-10. Case appears in Court Clerk\'s verification queue.', entry:'Lawyer submits case form + documents', exit:'Court Clerk begins document verification'},
+  2: {n:'S2 — VERIFIED', d:'Court Clerk reviews all uploaded documents for completeness and authenticity. Checks jurisdiction, verifies litigant identity against Aadhaar. If documents incomplete — case returns to FILED state with error notes.', entry:'Clerk confirms all documents valid', exit:'Judge reviews case for admissibility'},
+  3: {n:'S3 — ADMITTED', d:'Judge reviews the case and confirms it is valid and worthy of court time. Case officially enters the judicial process. AI engine recommends similar precedents to judge at this stage for initial orientation.', entry:'Judge admits case as valid', exit:'Clerk schedules first hearing date'},
+  4: {n:'S4 — HEARING SCHEDULED', d:'AI scheduler suggests optimal hearing date based on court load, judge specialization, and case priority. Court Clerk confirms the date. Automatic notifications sent to all parties via SMS and email.', entry:'Hearing date set in system', exit:'Hearing date arrives — case called in court'},
+  5: {n:'S5 — UNDER HEARING', d:'Case is actively being heard. Judge, lawyers, and parties present in court. Clerk records hearing notes in real-time. If adjourned, case returns to HEARING SCHEDULED. AI continues to surface relevant precedents during hearing.', entry:'Case called in court room', exit:'Judge reserves judgment OR adjourns OR dismisses'},
+  6: {n:'S6 — JUDGMENT RESERVED', d:'Judge has heard all arguments and reserved the judgment for a future date to write the verdict. Case is in deliberation phase. Typical duration: 2-4 weeks for complex cases.', entry:'Judge announces judgment reserved', exit:'Judge delivers written judgment'},
+  7: {n:'S7 — JUDGMENT DELIVERED', d:'Judge\'s verdict is officially recorded in the system with digital signature. Full judgment text uploaded. All parties automatically notified. 90-day window opens for appeal filing.', entry:'Judgment signed and uploaded', exit:'Party files appeal OR 90-day window closes'},
+  8: {n:'S8 — APPEAL FILED', d:'Losing party files appeal to higher court within statutory time limit. Complete case history automatically transferred to higher court\'s NyayaAI instance. Original court\'s jurisdiction paused pending appeal outcome.', entry:'Losing party files appeal online', exit:'Higher court accepts or rejects appeal'},
+  9: {n:'S9 — CLOSED', d:'All proceedings finished permanently. No further actions possible on this case. Complete case record archived in read-only mode. Statistical data used to improve AI prediction models for future cases.', entry:'Final judgment accepted OR no appeal within limit', exit:'FINAL STATE — No exit'},
+};
+function showState(n) {
+  document.querySelectorAll('.state-node').forEach((el,i) => el.classList.toggle('active', i===n-1));
+  const s = stateInfo[n];
+  const detail = document.getElementById('state-detail');
+  detail.classList.add('active');
+  document.getElementById('state-detail-content').innerHTML = `
+    <strong style="color:var(--gold);font-family:'Playfair Display',serif;font-size:1.2rem;">${s.n}</strong>
+    <p style="margin-top:8px;color:rgba(245,240,232,0.7);font-size:0.9rem;line-height:1.7;">${s.d}</p>
+    <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span style="padding:4px 12px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:20px;font-size:0.75rem;color:var(--gold);">Entry: ${s.entry}</span>
+      <span style="padding:4px 12px;background:rgba(41,128,185,0.1);border:1px solid rgba(41,128,185,0.2);border-radius:20px;font-size:0.75rem;color:#5dade2;">Exit: ${s.exit}</span>
+    </div>
+  `;
+}
+
+// ── Feature Modal ─────────────────────────────────────────────────────────────
+const featureInfo = {
+  ai: {t:'🤖 AI Precedent Engine', b:'Our NLP engine uses vector embeddings to search through 10+ years of Supreme Court and High Court judgments. Unlike keyword search, it understands the MEANING of legal text — finding relevant precedents even when exact words differ. Powered by Elasticsearch with custom legal domain training.'},
+  schedule: {t:'📅 Intelligent Scheduler', b:'Machine learning model trained on historical court data predicts optimal hearing dates. Considers: judge specialization match, current court load, case complexity score, statutory time requirements, and party availability. Reduces scheduling conflicts by 60% and waiting time significantly.'},
+  lifecycle: {t:'⚖️ Case Lifecycle Tracker', b:'Complete state machine with 9 states and 15+ transition rules. Handles all Indian legal scenarios: adjournment, transfer, dismissal, withdrawal, and appeal. Every state change is logged immutably in the audit trail. Real-time status visible to all authorized parties.'},
+  rbac: {t:'🔐 Role-Based Access Control', b:'6 completely separate secure portals. Each role sees only what they need. Judge cannot see lawyer billing. Litigant cannot see judicial deliberations. All protected by JWT tokens, OTP verification, and AES-256 encryption. Fully compliant with IT Act 2000 and PDPB 2023.'},
+  docs: {t:'📄 Document Management', b:'Version-controlled storage for all legal documents. Every upload gets AES-256 encryption, SHA-256 hash for tamper detection, and digital signature verification. Supports FIR, charge sheets, evidence photos, affidavits, and judicial orders. AWS S3 backend with 99.999% durability.'},
+  notify: {t:'🔔 Real-Time Notifications', b:'Observer design pattern in action. Case is the Subject. All parties (Judge, Lawyer, Litigant, Clerk) are Observers. When case status changes, all subscribed parties receive SMS via Twilio and email via SMTP within 2 minutes. No manual notification needed — zero human error.'},
+  analytics: {t:'📊 Analytics Dashboard', b:'Real-time court analytics for administrators. Pendency reports show case backlog trends. Judge performance metrics show average case resolution time. Court utilization charts show peak hours and room usage. All exportable as PDF and Excel. Connects to NJDG for national-level reporting.'},
+  offline: {t:'📡 Offline Sync', b:'Built as a Progressive Web App (PWA). District courts with poor internet connectivity can still use all core features offline. Data is stored locally using service workers and syncs automatically when connectivity is restored. Designed specifically for India\'s rural judicial infrastructure.'},
+  appeal: {t:'🏛️ Appeal Management', b:'Electronic appeal filing with automatic deadline tracking. System calculates statutory filing window (90 days for civil, 30 days for criminal). Complete case history, documents, and hearing records automatically transferred to higher court\'s system. Reduces manual paperwork by 100%.'},
+};
+function openFeature(key) {
+  const f = featureInfo[key];
+  document.getElementById('modal-title').textContent = f.t;
+  document.getElementById('modal-body').textContent = f.b;
+  document.getElementById('modal-extra').innerHTML = '';
+  document.getElementById('modal').classList.add('open');
+}
+
+// ── Request Demo Modal ────────────────────────────────────────────────────────
+function openModal(type, data) {
+  if(type === 'request') {
+    document.getElementById('modal-title').textContent = '🏛️ Request NyayaAI Demo';
+    document.getElementById('modal-body').textContent = 'Fill the contact form below to schedule a personalized demo for your court or organization.';
+    document.getElementById('modal-extra').innerHTML = '<a href="#contact" onclick="closeModal()" class="btn-primary" style="display:block;text-align:center;text-decoration:none;padding:12px;">Go to Contact Form ↓</a>';
+  } else if(type === 'filed') {
+    document.getElementById('modal-title').textContent = '✅ Case Filed Successfully!';
+    document.getElementById('modal-body').textContent = 'Your case has been registered in NyayaAI. The Court Clerk will verify your documents within 24 hours.';
+    document.getElementById('modal-extra').innerHTML = `
+      <div style="background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.2);border-radius:8px;padding:20px;text-align:center;margin-top:16px;">
+        <div style="font-size:0.78rem;color:rgba(245,240,232,0.5);margin-bottom:8px;">YOUR CASE NUMBER</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--gold);">${data}</div>
+        <div style="font-size:0.78rem;color:rgba(245,240,232,0.5);margin-top:8px;">AI Priority Score: <span style="color:var(--gold)">Calculating...</span></div>
+      </div>
+      <p style="font-size:0.82rem;color:rgba(245,240,232,0.5);margin-top:12px;text-align:center;">Confirmation SMS sent to registered mobile number</p>
+    `;
+  }
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if(e.target === document.getElementById('modal')) closeModal(); });
+
+// ── Toast ───────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Notifications ────────────────────────────────────────────────────────────
+const notifData = [
+  { icon:'📱', cls:'sms', title:'SMS Sent — Adv. Priya Sharma', text:'Hearing for CAS-2026-00847 scheduled on 07 Mar 2026, 10:30 AM. Court Hall 3.', time:'just now' },
+  { icon:'📧', cls:'email', title:'Email Sent — Mr. Ramesh Kumar (Litigant)', text:'Your case hearing has been scheduled. Please appear at Bangalore City Civil Court on 07 March 2026.', time:'1s ago' },
+  { icon:'🔔', cls:'alert', title:'In-App Alert — Hon. Judge K. Mehta', text:'New hearing assigned: CAS-2026-00847 (Bail Application, URGENT). AI has identified 4 relevant precedents.', time:'2s ago' },
+  { icon:'🤖', cls:'ai', title:'AI Engine — Precedent Alert', text:'High-confidence match found: Arnesh Kumar vs State of Bihar (2014). Relevance score: 91%. Recommended review before hearing.', time:'3s ago' },
+];
+let notifShown = false;
+function triggerNotifications() {
+  clearNotifications();
+  const feed = document.getElementById('notif-feed');
+  notifData.forEach((n, i) => {
+    setTimeout(() => {
+      const card = document.createElement('div');
+      card.className = 'notif-card';
+      card.innerHTML = `<div class="notif-icon ${n.cls}">${n.icon}</div><div class="notif-body"><div class="notif-title">${n.title}</div><div class="notif-text">${n.text}</div></div><div class="notif-time">${n.time}</div>`;
+      feed.appendChild(card);
+      setTimeout(() => card.classList.add('show'), 50);
+    }, i * 700);
+  });
+  showToast('🔔 Case event triggered — notifying all 4 parties!');
+}
+function clearNotifications() {
+  document.getElementById('notif-feed').innerHTML = '';
+}
+
+// ── Contact Submit ────────────────────────────────────────────────────────────
+function submitContact() {
+  const name = document.getElementById('c-name').value;
+  if(!name) { showToast('⚠️ Please fill in your name first'); return; }
+  showToast('✅ Request sent! We will contact you within 24 hours, ' + (name || 'there') + '!');
+  ['c-name','c-org','c-email','c-phone','c-msg'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ── Keyboard ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') {
+    closeModal();
+    closeLoginPage();
+  }
+});
+
+// ── Enter key for AI search ──────────────────────────────────────────────────
+document.getElementById('ai-input').addEventListener('keypress', e => { if(e.key === 'Enter') runAISearch(); });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── LOGIN SYSTEM ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Simulated user accounts
+const USERS = {
+  'judge.mehta@bangalore.court.gov.in':   { pass:'Judge@2026',  role:'judge',      name:'Hon. Kavita Mehta',    icon:'👨‍⚖️' },
+  'adv.sharma@karbar.org':                { pass:'Lawyer@2026', role:'lawyer',     name:'Adv. Priya Sharma',    icon:'👨‍💼' },
+  'ramesh.kumar@citizen.in':              { pass:'User@2026',   role:'litigant',   name:'Ramesh Kumar',         icon:'👤' },
+  'clerk.ravi@bangalore.court.gov.in':    { pass:'Clerk@2026',  role:'clerk',      name:'Ravi S. (Clerk)',      icon:'📋' },
+  'pp.suresh@karnataka.gov.in':           { pass:'Pp@2026',     role:'prosecutor', name:'Adv. Suresh (PP)',     icon:'👮' },
+  'admin@nyayaai.gov.in':                 { pass:'Admin@2026',  role:'admin',      name:'System Administrator', icon:'🔧' },
+};
+
+// In-session new registrations
+const REGISTERED = {};
+
+let currentRole = 'judge';
+let currentAuthMode = 'login';
+let isLoggedIn = false;
+let passVisible = false;
+
+const roleData = {
+  judge:      { icon:'👨‍⚖️', label:'Judge',          color:'#c9a84c', welcome:'Your AI-powered court dashboard is ready.', dash:'Accessing judicial workspace…' },
+  lawyer:     { icon:'👨‍💼', label:'Lawyer',         color:'#5dade2', welcome:'Your case management portal is ready.',    dash:'Loading case files & schedules…' },
+  litigant:   { icon:'👤',   label:'Litigant',       color:'#2ecc71', welcome:'Track your case status in real-time.',     dash:'Fetching your case updates…' },
+  clerk:      { icon:'📋',   label:'Court Clerk',    color:'#e67e22', welcome:'Document verification queue loaded.',      dash:'Loading verification queue…' },
+  prosecutor: { icon:'👮',   label:'Prosecutor',     color:'#e74c3c', welcome:'Case files and charge sheets ready.',      dash:'Accessing prosecution records…' },
+  admin:      { icon:'🔧',   label:'Administrator',  color:'#9b59b6', welcome:'Full system control panel loaded.',        dash:'Initialising admin console…' },
+};
+
+// ── Open / Close login page ──────────────────────────────────────────────────
+function openLoginPage(mode = 'login') {
+  document.getElementById('login-page').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  switchAuth(mode);
+  // sync role highlight on left panel
+  highlightLeftRole(currentRole);
+}
+
+function closeLoginPage() {
+  document.getElementById('login-page').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ── Switch Login ↔ Register ──────────────────────────────────────────────────
+function switchAuth(mode) {
+  currentAuthMode = mode;
+  const isReg = mode === 'register';
+  document.getElementById('btn-login').classList.toggle('active', !isReg);
+  document.getElementById('btn-register').classList.toggle('active', isReg);
+  document.querySelectorAll('.register-fields').forEach(el => el.classList.toggle('active', isReg));
+  document.getElementById('login-extras').style.display = isReg ? 'none' : 'flex';
+  document.getElementById('demo-section').style.display = isReg ? 'none' : 'block';
+  document.getElementById('login-submit-btn').textContent = isReg
+    ? 'Create Account →'
+    : 'Sign In to NyayaAI →';
+  // clear fields on switch
+  ['login-email','login-password','reg-name','reg-phone','reg-confirm'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+}
+
+// ── Role selection ────────────────────────────────────────────────────────────
+function selectRole(role, btn) {
+  currentRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  highlightLeftRole(role);
+}
+
+function selectRoleFromLeft(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  const rb = document.getElementById('rb-' + role);
+  if(rb) rb.classList.add('active');
+  highlightLeftRole(role);
+}
+
+function highlightLeftRole(role) {
+  document.querySelectorAll('.role-preview-item').forEach(el => el.classList.remove('selected-role'));
+  const roles = ['judge','lawyer','litigant','clerk','prosecutor','admin'];
+  const idx = roles.indexOf(role);
+  const items = document.querySelectorAll('.role-preview-item');
+  if(items[idx]) items[idx].classList.add('selected-role');
+}
+
+// ── Show/hide password ────────────────────────────────────────────────────────
+function togglePass() {
+  passVisible = !passVisible;
+  const inp = document.getElementById('login-password');
+  inp.type = passVisible ? 'text' : 'password';
+  document.getElementById('pass-toggle').textContent = passVisible ? '🙈' : '👁';
+}
+
+// ── Fill demo credentials ─────────────────────────────────────────────────────
+function fillDemo(email, pass, role) {
+  document.getElementById('login-email').value = email;
+  document.getElementById('login-password').value = pass;
+  selectRoleFromLeft(role);
+  showToast('✏️ Demo credentials filled — click Sign In!');
+}
+
+// ── Forgot password ───────────────────────────────────────────────────────────
+function forgotPassword(e) {
+  if(e) e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  if(!email) { showToast('✉️ Enter your email address first'); return; }
+  showToast('📧 Password reset link sent to ' + email);
+}
+
+// ── Handle Login / Register ───────────────────────────────────────────────────
+function handleAuth() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('login-password').value;
+  const btn   = document.getElementById('login-submit-btn');
+
+  if(!email) { shakeField('login-email'); showToast('⚠️ Please enter your email'); return; }
+  if(!pass)  { shakeField('login-password'); showToast('⚠️ Please enter your password'); return; }
+
+  if(currentAuthMode === 'register') {
+    const name    = document.getElementById('reg-name').value.trim();
+    const phone   = document.getElementById('reg-phone').value.trim();
+    const confirm = document.getElementById('reg-confirm').value;
+    if(!name)  { showToast('⚠️ Please enter your full name'); return; }
+    if(!phone) { showToast('⚠️ Please enter your phone number'); return; }
+    if(pass !== confirm) { shakeField('reg-confirm'); showToast('⚠️ Passwords do not match'); return; }
+    if(pass.length < 6) { shakeField('login-password'); showToast('⚠️ Password must be at least 6 characters'); return; }
+    if(USERS[email] || REGISTERED[email]) { showToast('⚠️ Account already exists — please sign in'); switchAuth('login'); return; }
+
+    // Register new user
+    REGISTERED[email] = { pass, role: currentRole, name, icon: roleData[currentRole].icon };
+    btn.textContent = 'Account created! Signing in…';
+    btn.classList.add('loading');
+    setTimeout(() => { loginSuccess(email, REGISTERED[email]); }, 1000);
+    return;
+  }
+
+  // LOGIN
+  btn.textContent = 'Verifying…';
+  btn.classList.add('loading');
+
+  setTimeout(() => {
+    const user = USERS[email] || REGISTERED[email];
+
+    if(!user || user.pass !== pass) {
+      btn.textContent = 'Sign In to NyayaAI →';
+      btn.classList.remove('loading');
+      shakeField('login-password');
+      showToast('❌ Invalid email or password');
+      return;
+    }
+
+    // Role mismatch warning (soft — still allow)
+    if(user.role !== currentRole) {
+      showToast(`ℹ️ Logging in as ${roleData[user.role].label} (your registered role)`);
+      selectRoleFromLeft(user.role);
+    }
+
+    loginSuccess(email, user);
+  }, 1200);
+}
+
+// ── Login success flow ────────────────────────────────────────────────────────
+function loginSuccess(email, user) {
+  isLoggedIn = true;
+  closeLoginPage();
+
+  const rd = roleData[user.role];
+  const ws = document.getElementById('welcome-screen');
+  document.getElementById('ws-icon').textContent  = rd.icon;
+  document.getElementById('ws-title').textContent = 'Welcome, ' + user.name;
+  document.getElementById('ws-sub').textContent   = rd.welcome;
+  document.getElementById('ws-status').textContent = rd.dash.toUpperCase();
+  ws.classList.add('active');
+
+  // Animate progress bar
+  const bar = document.getElementById('ws-bar');
+  const steps = [
+    { pct:'15%', txt:'AUTHENTICATING…' },
+    { pct:'40%', txt:'LOADING ROLE PERMISSIONS…' },
+    { pct:'65%', txt:'FETCHING CASE DATA…' },
+    { pct:'85%', txt:'INITIALISING AI ENGINE…' },
+    { pct:'100%', txt:'READY!' },
+  ];
+  let i = 0;
+  const stepInterval = setInterval(() => {
+    if(i >= steps.length) { clearInterval(stepInterval); return; }
+    bar.style.width = steps[i].pct;
+    bar.style.transition = 'width 0.4s ease';
+    document.getElementById('ws-status').textContent = steps[i].txt;
+    i++;
+  }, 350);
+
+  // After loading, dismiss welcome and update nav
+  setTimeout(() => {
+    ws.classList.remove('active');
+    document.getElementById('welcome-screen').style.display = 'none';
+
+    // Update nav
+    document.getElementById('nav-user-badge').classList.add('show');
+    document.getElementById('nav-user-name').textContent = rd.icon + ' ' + user.name;
+    document.getElementById('nav-login-btn').style.display = 'none';
+    document.getElementById('nav-register-btn').style.display = 'none';
+
+    showToast('✅ Signed in as ' + user.name + ' · ' + rd.label);
+
+    // Reset btn
+    document.getElementById('login-submit-btn').textContent = 'Sign In to NyayaAI →';
+    document.getElementById('login-submit-btn').classList.remove('loading');
+  }, 2400);
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+function logoutUser() {
+  isLoggedIn = false;
+  document.getElementById('nav-user-badge').classList.remove('show');
+  document.getElementById('nav-login-btn').style.display = '';
+  document.getElementById('nav-register-btn').style.display = '';
+  document.getElementById('welcome-screen').style.display = '';
+  // reset welcome bar
+  document.getElementById('ws-bar').style.width = '0%';
+  showToast('👋 Signed out successfully');
+}
+
+// ── Shake animation on invalid field ─────────────────────────────────────────
+function shakeField(id) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.animation = 'none';
+  el.style.borderColor = 'rgba(231,76,60,0.7)';
+  el.style.boxShadow = '0 0 0 3px rgba(231,76,60,0.1)';
+  el.offsetHeight; // reflow
+  el.style.animation = 'shake 0.4s ease';
+  setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; el.style.animation = ''; }, 800);
+}
+
+// Shake keyframes injected via JS
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = '@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}';
+document.head.appendChild(shakeStyle);
+
+// ── Also open login when clicking "Request Demo" ──────────────────────────────
+// Override openModal for 'request' to open login instead
+const _origOpenModal = openModal;
+function openModal(type, data) {
+  if(type === 'request') { openLoginPage('login'); return; }
+  _origOpenModal(type, data);
+}
+</script>
+</body>
+</html>
