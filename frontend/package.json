@@ -1,0 +1,40 @@
+{
+  "name": "nyayaai-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "14.2.13",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "axios": "1.7.7",
+    "@tanstack/react-query": "5.59.0",
+    "zustand": "5.0.0",
+    "clsx": "2.1.1",
+    "tailwind-merge": "2.5.2",
+    "lucide-react": "0.447.0",
+    "date-fns": "4.1.0",
+    "react-hook-form": "7.53.0",
+    "zod": "3.23.8",
+    "@hookform/resolvers": "3.9.0",
+    "recharts": "2.13.0",
+    "react-hot-toast": "2.4.1"
+  },
+  "devDependencies": {
+    "typescript": "5.6.2",
+    "@types/node": "22.7.4",
+    "@types/react": "18.3.11",
+    "@types/react-dom": "18.3.0",
+    "tailwindcss": "3.4.13",
+    "postcss": "8.4.47",
+    "autoprefixer": "10.4.20",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.13"
+  }
+}

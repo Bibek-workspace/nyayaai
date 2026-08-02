@@ -1,0 +1,52 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-multipart==0.0.12
+
+# Database
+sqlalchemy[asyncio]==2.0.35
+asyncpg==0.29.0
+alembic==1.13.3
+pgvector==0.3.5
+
+# Auth & security
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+email-validator==2.2.0
+
+# AI / RAG
+openai==1.51.0
+langchain==0.3.1
+langchain-openai==0.2.1
+langchain-community==0.3.1
+tiktoken==0.8.0
+
+# File handling / OCR
+pypdf==5.0.1
+pdf2image==1.17.0
+pytesseract==0.3.13
+python-docx==1.1.2
+pillow==10.4.0
+
+# Storage
+boto3==1.35.36
+
+# Cache & queue
+redis==5.1.1
+
+# Notifications
+twilio==9.3.3
+aiosmtplib==3.0.2
+jinja2==3.1.4
+
+# Utilities
+httpx==0.27.2
+tenacity==8.5.0
+python-dotenv==1.0.1
+loguru==0.7.2
+
+# Dev
+pytest==8.3.3
+pytest-asyncio==0.24.0
+ruff==0.6.9
